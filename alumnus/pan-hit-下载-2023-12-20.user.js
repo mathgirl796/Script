@@ -9,6 +9,8 @@
 // @grant        none
 // ==/UserScript==
 
+/* 使用说明：把@match后面的服务器地址改成网盘里pdf页面中iframe元素的地址 */
+
 function replaceNumberInString(inputString, replacementNumber) {
   /* 使用正则表达式匹配字符串中的 n=p1.img */
   const regex = /n=p(\d+)\.img/g;
