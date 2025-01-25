@@ -1,4 +1,4 @@
-﻿#SingleInstance Force
+#SingleInstance Force
 
 ^!r::Reload
 
@@ -44,6 +44,8 @@ send_delay(str, delay := 200)
 全局设置横坐标:=1849
 图片居中横坐标:=1714
 图片居中纵坐标:=267
+清除空行横坐标:=1630
+清除空行纵坐标:=406
 确认全局设置横坐标:=1692
 确认全局设置纵坐标:=473
 ; 初始化格式
@@ -70,6 +72,12 @@ send_delay(str, delay := 200)
     if Color == "0xFFFFFF" 
     {
         move_click_delay(图片居中横坐标, 图片居中纵坐标)
+    }
+    Color := PixelGetColor(清除空行横坐标, 清除空行纵坐标)
+    OutputDebug(Color)
+    if Color == "0xFFFFFF" 
+    {
+        move_click_delay(清除空行横坐标, 清除空行纵坐标)
     }
     move_click_delay(确认全局设置横坐标, 确认全局设置纵坐标)
 }
