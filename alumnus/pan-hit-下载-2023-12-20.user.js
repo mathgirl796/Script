@@ -112,7 +112,7 @@ function getIframeDocument(iframe) {
             var button = document.createElement("button");
 
             // 设置按钮文本
-            button.innerHTML = "Click me!";
+            button.innerHTML = "下载pdf";
 
             // 设置按钮样式（可选）
             button.style.position = "fixed";
