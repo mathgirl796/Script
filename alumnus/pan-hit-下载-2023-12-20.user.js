@@ -4,7 +4,7 @@
 // @version      2023-12-20
 // @description  try to take over the world!
 // @author       You
-// @match        panowa-hit-edu-cn-s.ivpn.hit.edu.cn:1080/*
+// @match        panowa.hit.edu.cn/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @grant        none
 // ==/UserScript==
