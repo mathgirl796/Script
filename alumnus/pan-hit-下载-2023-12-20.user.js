@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pan-hit-下载
 // @namespace    http://tampermonkey.net/
-// @version      2023-12-20
+// @version      2025-12-24
 // @description  try to take over the world!
 // @author       You
 // @match        panowa.hit.edu.cn/*
@@ -104,8 +104,9 @@ function getIframeDocument(iframe) {
     'use strict';
 
     // Your code here...
+
     document.onreadystatechange = function () {
-        if (document.readyState === "complete") {
+        if (document.readyState === "complete"&&window.top !== window.parent) {
 
             // 创建按钮元素
             var button = document.createElement("button");
@@ -118,6 +119,8 @@ function getIframeDocument(iframe) {
             button.style.top = "0";
             button.style.left = "0";
             button.style.zIndex = "9999";
+            button.style.minWidth = "300px";
+            button.style.minHeight = "300px";
 
             // 添加按钮到 body 元素中
             document.body.appendChild(button);
