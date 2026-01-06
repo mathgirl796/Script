@@ -1,0 +1,1 @@
+pyinstaller -F -w -i split.png v2.py -n 拆分合并表格.exe

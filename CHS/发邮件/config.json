@@ -1,0 +1,10 @@
+{
+  "sender_email": "ybjs3232678@126.com",
+  "sender_password": "BCRMJ7vNYiq6U9tb",
+  "smtp_server": "smtp.126.com",
+  "smtp_port": 25,
+  "email_excel_path": "C:/Users/Administrator/Desktop/邮箱对应表.xlsx",
+  "sender_name": "四平医保结算部",
+  "email_subject": "支付明细",
+  "email_body": "请查收"
+}
