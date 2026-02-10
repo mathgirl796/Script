@@ -127,22 +127,24 @@ class WordMailMergeApp:
             markers_dict = {}
             
             # 搜索段落中的标记，记录出现顺序
-            for para in doc.paragraphs:
+            for para_idx, para in enumerate(doc.paragraphs):
                 matches = re.finditer(r'【([^】]+)】', para.text)
                 for match in matches:
                     marker = match.group(1)
                     if marker not in markers_dict:
                         markers_dict[marker] = len(markers_dict)
+                        self.log(f"在段落{para_idx}中发现新标记: 【{marker}】")
             
             # 搜索表格中的标记，记录出现顺序
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
+            for table_idx, table in enumerate(doc.tables):
+                for row_idx, row in enumerate(table.rows):
+                    for cell_idx, cell in enumerate(row.cells):
                         matches = re.finditer(r'【([^】]+)】', cell.text)
                         for match in matches:
                             marker = match.group(1)
                             if marker not in markers_dict:
                                 markers_dict[marker] = len(markers_dict)
+                                self.log(f"在表格{table_idx}第{row_idx}行第{cell_idx}列中发现新标记: 【{marker}】")
             
             # 按出现顺序排序标记
             self.markers = sorted(markers_dict.keys(), key=lambda x: markers_dict[x])
@@ -270,69 +272,81 @@ class WordMailMergeApp:
         if not runs:
             return
         
-        # 构建完整的文本和对应的格式信息
+        # 构建完整的文本
         full_text = ''.join(run.text for run in runs)
         
         if old_text not in full_text:
             return
         
-        # 找到所有需要替换的位置
-        old_pos = 0
-        replacement_positions = []
-        while True:
-            pos = full_text.find(old_text, old_pos)
-            if pos == -1:
-                break
-            replacement_positions.append((pos, pos + len(old_text)))
-            old_pos = pos + 1
+        # 保存每个run的格式信息
+        run_formats = []
+        for run in runs:
+            run_formats.append({
+                'bold': run.bold,
+                'italic': run.italic,
+                'underline': run.underline,
+                'font_name': run.font.name,
+                'font_size': run.font.size,
+                'font_color_rgb': run.font.color.rgb if run.font.color and run.font.color.rgb else None
+            })
         
-        if not replacement_positions:
+        # 保存每个run对应的文本段，计算每个字符所属的run索引
+        char_to_run_idx = []
+        for run_idx, run in enumerate(runs):
+            for _ in run.text:
+                char_to_run_idx.append(run_idx)
+        
+        # 在完整文本中进行替换
+        new_full_text = full_text.replace(old_text, new_text)
+        
+        # 重新构建段落：将新文本按原始格式分段
+        para.clear()
+        
+        if len(char_to_run_idx) == 0:
+            # 没有字符，直接添加新文本
+            if run_formats:
+                new_run = para.add_run(new_full_text)
+                self._apply_format(new_run, run_formats[0])
             return
         
-        # 计算每个字符属于哪个run
-        char_to_run = []
-        current_pos = 0
-        for run_idx, run in enumerate(runs):
-            run_text = run.text
-            for _ in run_text:
-                char_to_run.append(run_idx)
-                current_pos += 1
+        # 遍历新文本的每个字符，使用对应位置的run格式
+        current_run_idx = 0
+        current_run_text = ""
         
-        # 替换文本
-        offset = 0
-        for start_pos, end_pos in replacement_positions:
-            real_start = start_pos + offset
-            real_end = end_pos + offset
+        for char_idx, char in enumerate(new_full_text):
+            # 计算原始文本中对应的字符位置
+            original_char_idx = min(char_idx, len(char_to_run_idx) - 1)
+            target_run_idx = char_to_run_idx[original_char_idx]
             
-            # 找到标记所在的run
-            start_run_idx = char_to_run[real_start] if real_start < len(char_to_run) else -1
+            # 如果run索引变化，先添加当前run
+            if target_run_idx != current_run_idx and current_run_text:
+                new_run = para.add_run(current_run_text)
+                self._apply_format(new_run, run_formats[current_run_idx])
+                current_run_text = ""
+                current_run_idx = target_run_idx
             
-            if start_run_idx != -1:
-                # 在该run中直接替换
-                runs[start_run_idx].text = runs[start_run_idx].text.replace(old_text, new_text)
-            
-            # 更新偏移量（因为替换后文本长度可能变化）
-            offset += len(new_text) - len(old_text)
+            current_run_text += char
         
-        # 清空内容并重新构建段落
-        new_runs = []
-        new_runs_text = []
-        
-        for run in runs:
-            if run.text:
-                new_runs.append(run)
-                new_runs_text.append(run.text)
-        
-        # 重建段落内容
-        para.clear()
-        for run, text in zip(new_runs, new_runs_text):
-            new_run = para.add_run(text)
-            new_run.bold = run.bold
-            new_run.italic = run.italic
-            new_run.underline = run.underline
-            new_run.font.name = run.font.name
-            new_run.font.size = run.font.size
-            new_run.font.color.rgb = run.font.color.rgb
+        # 添加最后一个run
+        if current_run_text:
+            new_run = para.add_run(current_run_text)
+            if current_run_idx < len(run_formats):
+                self._apply_format(new_run, run_formats[current_run_idx])
+    
+    def _apply_format(self, run, format_info):
+        """应用格式到run"""
+        if format_info['bold'] is not None:
+            run.bold = format_info['bold']
+        if format_info['italic'] is not None:
+            run.italic = format_info['italic']
+        if format_info['underline'] is not None:
+            run.underline = format_info['underline']
+        if format_info['font_name']:
+            run.font.name = format_info['font_name']
+        if format_info['font_size']:
+            run.font.size = format_info['font_size']
+        if format_info['font_color_rgb']:
+            run.font.color.rgb = format_info['font_color_rgb']
     
     def execute_mail_merge(self):
         # 验证输入
